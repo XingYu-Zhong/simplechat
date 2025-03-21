@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ai-chat</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+            color: #333333;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 标签栏样式 */
+        .tabs {
+            display: flex;
+            background-color: #ffffff;
+            padding: 0;
+            border-bottom: 1px solid #eaeaea;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .tabs-left {
+            display: flex;
+        }
+        .tab {
+            padding: 12px 16px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: #666;
+            font-size: 14px;
+            position: relative;
+        }
+        .tab.active {
+            color: #333;
+            font-weight: 500;
+        }
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #1a73e8;
+        }
+
+        /* 内容区域样式 */
+        .content {
+            flex: 1;
+            display: none;
+            height: calc(100vh - 43px);
+            background-color: #f7f7f7;
+        }
+        .content.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 聊天区域样式 */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+            background-color: #f7f7f7;
+        }
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+        .message {
+            margin: 8px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            max-width: 88%;
+        }
+        .user-message {
+            flex-direction: row-reverse;
+            align-self: flex-end;
+        }
+        .bot-message {
+            align-self: flex-start;
+        }
+        .message-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+        .user-avatar {
+            background-color: #ffd591;
+            color: #873800;
+        }
+        .bot-avatar {
+            background: linear-gradient(135deg, #1a73e8, #1557b0);
+            color: white;
+        }
+        .message-wrapper {
+            display: flex;
+            flex-direction: column;
+            max-width: calc(100% - 32px);
+        }
+        .message-content {
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+        .user-message .message-content {
+            background-color: #e3f2fd;
+            color: #333;
+        }
+        .bot-message .message-content {
+            background-color: #ffffff;
+            color: #333;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        .message-meta {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+            padding: 0 2px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .message-meta.thinking::after {
+            content: 'AI is thinking...';
+            color: #666;
+        }
+        .user-message .message-meta {
+            text-align: right;
+            justify-content: flex-end;
+        }
+
+        .input-container {
+            padding: 16px;
+            background-color: #f7f7f7;
+            position: relative;
+        }
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #ffffff;
+            padding: 12px 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            transition: box-shadow 0.2s;
+        }
+        .input-wrapper:focus-within {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        #message-input {
+            flex: 1;
+            border: none;
+            background: none;
+            font-size: 14px;
+            line-height: 1.6;
+            padding: 8px;
+            color: #333;
+            min-height: 20px;
+            max-height: 120px;
+            resize: none;
+        }
+        #message-input::placeholder {
+            color: #999;
+        }
+        .model-selector {
+            position: relative;
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+        }
+        .model-select-button {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border: none;
+            border-radius: 6px;
+            background: #f5f5f5;
+            color: #666;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .model-select-button:hover {
+            background-color: #eee;
+        }
+        #send-button {
+            padding: 8px;
+            background: #1a73e8;
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .model-dropdown {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            right: 0;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            min-width: 180px;
+            z-index: 1000;
+        }
+        .model-dropdown.show {
+            display: block;
+        }
+        .model-option {
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 13px;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .model-option:hover {
+            background-color: #f5f5f5;
+        }
+        .model-option.selected {
+            background-color: #e3f2fd;
+            color: #1a73e8;
+        }
+        .model-speed {
+            font-size: 12px;
+            color: #666;
+            opacity: 0.8;
+        }
+
+        /* 配置区域样式 */
+        .config-container {
+            padding: 24px;
+            background: #f7f7f7;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .config-sections {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 80px;
+        }
+
+        .config-section {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .config-title {
+            font-size: 15px;
+            font-weight: 500;
+            color: #1a73e8;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .config-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .config-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .config-label {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .config-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .config-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #333;
+            background: #ffffff;
+            transition: all 0.2s;
+        }
+
+        .config-input[type="password"] {
+            padding-right: 36px;  /* 为小眼睛留出空间 */
+        }
+
+        #baseUrlInput {
+            color: #666;
+            background: #f5f5f5;
+            border: 1px solid #eaeaea;
+            cursor: default;
+            user-select: none;
+            padding: 8px 12px;
+            font-size: 13px;
+            border-radius: 6px;
+        }
+
+        #baseUrlInput:hover, #baseUrlInput:focus {
+            border: 1px solid #eaeaea;
+            background: #f5f5f5;
+            box-shadow: none;
+            outline: none;
+        }
+
+        .config-input:hover {
+            border-color: #1a73e8;
+            background: #f8f9fc;
+        }
+
+        .config-input:focus {
+            outline: none;
+            border-color: #1a73e8;
+            background: #ffffff;
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.1);
+        }
+
+        .toggle-visibility {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 4px;
+            color: #666;
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        .toggle-visibility:hover {
+            color: #333;
+        }
+
+        .config-tip {
+            font-size: 12px;
+            color: #666;
+            opacity: 0.8;
+        }
+
+        .config-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px 24px;
+            background: #fff;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            z-index: 100;
+        }
+
+        .config-save-btn {
+            padding: 8px 24px;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .config-save-btn:hover {
+            background: #1557b0;
+        }
+
+        .config-save-btn:active {
+            transform: scale(0.98);
+        }
+
+        .config-error {
+            font-size: 12px;
+            color: #d93025;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .config-error.show {
+            display: block;
+        }
+
+        .new-chat-btn {
+            margin-right: 16px;
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: none;
+            background: #f0f7ff;
+            color: #1a73e8;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+
+        .new-chat-btn:hover {
+            background: #e3f2fd;
+        }
+
+        .new-chat-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 标签栏 -->
+    <div class="tabs">
+        <button class="tab active">聊天</button>
+    </div>
+
+    <!-- 聊天内容 -->
+    <div id="chatContent" class="content active">
+        <div class="chat-container">
+            <div class="messages-container" id="messages">
+                <div class="message bot-message">
+                    <div class="message-avatar bot-avatar">AI</div>
+                    <div class="message-wrapper">
+                        <div class="message-content">
+                            您好！我是您的 AI 助手。我可以帮助您解决代码相关的问题，包括代码审查、bug修复、性能优化等。请随时向我提问。
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="status-message" id="statusMessage"></div>
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <input type="text" id="message-input" placeholder="输入消息" />
+                    <div class="model-selector">
+                        <button type="button" class="model-select-button" id="modelSelectButton">
+                            Qwen qwq-32b
+                        </button>
+                        <div class="model-dropdown" id="modelDropdown">
+                            <div class="model-option selected" data-value="qwen/qwq-32b:free">
+                                Qwen qwq-32b
+                                <span class="model-speed">快速思考</span>
+                            </div>
+                            <div class="model-option" data-value="moonshotai/moonlight-16b-a3b-instruct:free">
+                                Moonlight 16b
+                                <span class="model-speed">快速响应</span>
+                            </div>
+                            <div class="model-option" data-value="deepseek/deepseek-r1:free">
+                                Deepseek R1
+                                <span class="model-speed">深度思考</span>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    <button id="send-button">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2.01 21L23 12L2.01 3L2 10L17 12L2 14L2.01 21Z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const vscode = acquireVsCodeApi();
+            
+            // UI 元素
+            const messagesContainer = document.getElementById('messages');
+            const messageInput = document.getElementById('message-input');
+            const sendButton = document.getElementById('send-button');
+            const modelSelectButton = document.getElementById('modelSelectButton');
+            const modelDropdown = document.getElementById('modelDropdown');
+            const modelOptions = modelDropdown.querySelectorAll('.model-option');
+            const statusMessage = document.getElementById('statusMessage');
+            let isProcessing = false;
+            let currentModel = 'qwen/qwq-32b:free';
+
+            // 更新 UI 状态
+            function updateUIState(state) {
+                messageInput.disabled = state === 'loading';
+                sendButton.disabled = state === 'loading';
+                
+                statusMessage.style.display = state === 'loading' ? 'block' : 'none';
+                statusMessage.className = 'status-message' + (state === 'error' ? ' error-message' : '');
+            }
+
+            // 模型选择功能
+            modelSelectButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                modelDropdown.classList.toggle('show');
+            });
+
+            document.addEventListener('click', () => {
+                modelDropdown.classList.remove('show');
+            });
+
+            modelOptions.forEach(option => {
+                option.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const value = option.getAttribute('data-value');
+                    const text = option.textContent.trim().split('\n')[0].trim();
+                    currentModel = value;
+                    modelSelectButton.textContent = text;
+                    modelOptions.forEach(opt => opt.classList.remove('selected'));
+                    option.classList.add('selected');
+                    modelDropdown.classList.remove('show');
+
+                    // 通知后端模型已切换
+                    vscode.postMessage({
+                        command: 'modelChanged',
+                        model: currentModel
+                    });
+                });
+            });
+
+            function sendMessage() {
+                const text = messageInput.value.trim();
+                if (text && !isProcessing) {
+                    isProcessing = true;
+                    updateUIState('loading');
+                    addMessage(text, 'user');
+                    
+                    // 添加一个临时的思考消息
+                    const thinkingMessage = document.createElement('div');
+                    thinkingMessage.classList.add('message', 'bot-message');
+                    const selectedOption = document.querySelector('.model-option.selected');
+                    const modelName = selectedOption.textContent.trim().split('\n')[0].trim();
+                    thinkingMessage.innerHTML = `
+                        <div class="message-avatar bot-avatar">AI</div>
+                        <div class="message-wrapper">
+                            <div class="message-meta thinking">
+                                ${modelName}
+                            </div>
+                        </div>
+                    `;
+                    messagesContainer.appendChild(thinkingMessage);
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    
+                    // 发送消息时包含当前选择的模型
+                    vscode.postMessage({
+                        command: 'sendMessage',
+                        text: text,
+                        model: currentModel
+                    });
+                    messageInput.value = '';
+                }
+            }
+
+            function addMessage(text, sender) {
+                // 如果是 AI 回复，移除思考状态的消息
+                if (sender === 'bot' && messagesContainer.lastElementChild.querySelector('.thinking')) {
+                    messagesContainer.removeChild(messagesContainer.lastElementChild);
+                }
+
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('message');
+                messageElement.classList.add(sender === 'user' ? 'user-message' : 'bot-message');
+                
+                const avatar = sender === 'user' ? '你' : 'AI';
+                const avatarClass = sender === 'user' ? 'user-avatar' : 'bot-avatar';
+                const selectedOption = document.querySelector('.model-option.selected');
+                const modelName = selectedOption ? selectedOption.textContent.trim().split('\n')[0].trim() : '';
+                
+                messageElement.innerHTML = `
+                    <div class="message-avatar ${avatarClass}">${avatar}</div>
+                    <div class="message-wrapper">
+                        <div class="message-content">${text}</div>
+                        <div class="message-meta">${sender === 'user' ? '' : modelName}</div>
+                    </div>
+                `;
+                
+                messagesContainer.appendChild(messageElement);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                return messageElement.querySelector('.message-content');
+            }
+
+            let currentStreamMessage = null;
+
+            // 处理流式响应
+            function handleStreamChunk(chunk) {
+                if (!currentStreamMessage) {
+                    // 移除思考状态的消息
+                    if (messagesContainer.lastElementChild.querySelector('.thinking')) {
+                        messagesContainer.removeChild(messagesContainer.lastElementChild);
+                    }
+                    currentStreamMessage = addMessage('', 'bot');
+                }
+                currentStreamMessage.textContent += chunk;
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            // 监听来自扩展的消息
+            window.addEventListener('message', event => {
+                const message = event.data;
+                switch (message.command) {
+                    case 'receiveStreamChunk':
+                        handleStreamChunk(message.chunk);
+                        break;
+                    case 'receiveReply':
+                        if (!message.text.startsWith('错误：')) {
+                            if (!currentStreamMessage) {
+                                addMessage(message.text, 'bot');
+                            }
+                            currentStreamMessage = null;
+                        } else {
+                            addMessage(message.text, 'bot');
+                        }
+                        isProcessing = false;
+                        updateUIState('ready');
+                        break;
+                    case 'updateStatus':
+                        if (message.status === 'loading') {
+                            statusMessage.textContent = message.text || '正在处理...';
+                            updateUIState('loading');
+                        } else if (message.status === 'error') {
+                            updateUIState('error');
+                        } else {
+                            updateUIState('ready');
+                        }
+                        break;
+                    case 'startNewChat':
+                        // 完全清空所有消息
+                        messagesContainer.innerHTML = '';
+                        
+                        // 添加一条欢迎消息
+                        const welcomeMessage = document.createElement('div');
+                        welcomeMessage.classList.add('message', 'bot-message');
+                        welcomeMessage.innerHTML = `
+                            <div class="message-avatar bot-avatar">AI</div>
+                            <div class="message-wrapper">
+                                <div class="message-content">
+                                    您好！我是您的 AI 助手。我可以帮助您解决代码相关的问题，包括代码审查、bug修复、性能优化等。请随时向我提问。
+                                </div>
+                            </div>
+                        `;
+                        messagesContainer.appendChild(welcomeMessage);
+                        
+                        // 重置状态
+                        isProcessing = false;
+                        currentStreamMessage = null;
+                        updateUIState('ready');
+                        
+                        // 重置模型选择
+                        const defaultOption = modelDropdown.querySelector('.model-option[data-value="qwen/qwq-32b:free"]');
+                        if (defaultOption) {
+                            defaultOption.click();
+                        }
+                        
+                        // 清空输入框
+                        messageInput.value = '';
+                        
+                        // 聚焦到输入框
+                        messageInput.focus();
+                        break;
+                }
+            });
+
+            // 事件监听
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            sendButton.addEventListener('click', sendMessage);
+        }());
+    </script>
+</body>
+</html> 

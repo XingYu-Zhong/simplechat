@@ -1,0 +1,99 @@
+{
+  "name": "helloword",
+  "displayName": "VSCode 聊天插件",
+  "description": "一个简单的 VSCode 侧边栏聊天插件",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.81.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:chatView"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "chat-view",
+          "title": "Chat",
+          "icon": "$(comment-discussion)"
+        }
+      ]
+    },
+    "views": {
+      "chat-view": [
+        {
+          "type": "webview",
+          "id": "chatView",
+          "name": "Chat"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "聊天插件",
+      "properties": {
+        "chatPlugin.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API Key"
+        },
+        "chatPlugin.baseUrl": {
+          "type": "string",
+          "default": "https://openrouter.ai/api/v1",
+          "description": "API Base URL"
+        },
+        "chatPlugin.historyLimit": {
+          "type": "number",
+          "default": 5,
+          "description": "历史记录保留轮数"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "chatView.newChat",
+        "title": "新建聊天",
+        "icon": "$(add)"
+      },
+      {
+        "command": "chatView.openConfig",
+        "title": "打开配置",
+        "icon": "$(gear)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "chatView.openConfig",
+          "group": "navigation@1",
+          "when": "view == chatView"
+        },
+        {
+          "command": "chatView.newChat",
+          "group": "navigation@2",
+          "when": "view == chatView"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./ && npm run copy-webview",
+    "watch": "tsc -watch -p ./",
+    "copy-webview": "mkdir -p out/webview && cp src/webview/* out/webview/"
+  },
+  "dependencies": {
+    "openai": "^4.87.4"
+  },
+  "devDependencies": {
+    "@types/node": "20.x",
+    "@types/vscode": "^1.81.0",
+    "@typescript-eslint/eslint-plugin": "^8.25.0",
+    "@typescript-eslint/parser": "^8.25.0",
+    "eslint": "^9.21.0",
+    "typescript": "^5.7.3"
+  }
+}

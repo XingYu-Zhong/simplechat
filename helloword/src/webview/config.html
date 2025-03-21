@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配置</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--vscode-editor-background);
+            color: var(--vscode-editor-foreground);
+        }
+
+        .config-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .config-sections {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .config-section {
+            background: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-widget-border);
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .config-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--vscode-editor-foreground);
+            position: relative;
+            padding-left: 12px;
+        }
+
+        .config-title::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 16px;
+            background: var(--vscode-textLink-foreground);
+            border-radius: 2px;
+        }
+
+        .config-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .config-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .config-label {
+            font-size: 14px;
+            color: var(--vscode-editor-foreground);
+        }
+
+        .config-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .config-input {
+            width: 100%;
+            padding: 8px 12px;
+            font-size: 14px;
+            border: 1px solid var(--vscode-input-border);
+            border-radius: 4px;
+            background: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .config-input:hover {
+            border-color: var(--vscode-input-border);
+        }
+
+        .config-input:focus {
+            border-color: var(--vscode-focusBorder);
+            box-shadow: 0 0 0 1px var(--vscode-focusBorder);
+        }
+
+        .config-input[type="number"]::-webkit-inner-spin-button,
+        .config-input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .config-tip {
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .config-tip::before {
+            content: '';
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23888' d='M8 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1zm0 1a6 6 0 1 0 0 12A6 6 0 0 0 8 2zm-.1 1.5a.9.9 0 0 1 .9.9.9.9 0 0 1-.9.9.9.9 0 0 1-.9-.9.9.9 0 0 1 .9-.9zm.1 2.5v5h1v1H7V6h1z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0.6;
+        }
+
+        .toggle-visibility {
+            position: absolute;
+            right: 8px;
+            background: none;
+            border: none;
+            padding: 4px;
+            cursor: pointer;
+            color: var(--vscode-button-foreground);
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+
+        .toggle-visibility:hover {
+            opacity: 1;
+        }
+
+        .config-footer {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .config-save-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .config-save-btn:hover {
+            background: var(--vscode-button-hoverBackground);
+        }
+
+        .config-save-btn:active {
+            background: var(--vscode-button-background);
+            transform: translateY(1px);
+        }
+    </style>
+</head>
+<body>
+    <div class="config-container">
+        <div class="config-sections">
+            <div class="config-section">
+                <div class="config-title">openRouter API 配置</div>
+                <div class="config-form">
+                    <div class="config-item">
+                        <label class="config-label">API Key</label>
+                        <div class="config-input-wrapper">
+                            <input type="password" id="apiKeyInput" class="config-input" placeholder="请输入 API Key">
+                            <button type="button" class="toggle-visibility" id="toggleApiKey" title="显示/隐藏 API Key">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 4.5C7 4.5 2.73 7.61 1 12C2.73 16.39 7 19.5 12 19.5C17 19.5 21.27 16.39 23 12C21.27 7.61 17 4.5 12 4.5ZM12 17C9.24 17 7 14.76 7 12C7 9.24 9.24 7 12 7C14.76 7 17 9.24 17 12C17 14.76 14.76 17 12 17ZM12 9C10.34 9 9 10.34 9 12C9 13.66 10.34 15 12 15C13.66 15 15 13.66 15 12C15 10.34 13.66 9 12 9Z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="config-tip">请确保 API Key 的安全，不要分享给他人</div>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Base URL</label>
+                        <div class="config-input-wrapper">
+                            <input type="text" 
+                                   id="baseUrlInput" 
+                                   class="config-input" 
+                                   value="https://openrouter.ai/api/v1" 
+                                   readonly
+                                   tabindex="-1">
+                        </div>
+                        <div class="config-tip">使用默认的 API 地址</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="config-section">
+                <div class="config-title">聊天基础配置</div>
+                <div class="config-form">
+                    <div class="config-item">
+                        <label class="config-label">历史记录轮数</label>
+                        <div class="config-input-wrapper">
+                            <input type="number" 
+                                   id="historyLimitInput" 
+                                   class="config-input" 
+                                   min="1" 
+                                   max="20" 
+                                   value="5" 
+                                   placeholder="请输入保留的对话轮数">
+                        </div>
+                        <div class="config-tip">设置保留的对话历史轮数，范围1-20轮，建议设置为5轮以获得最佳体验</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="config-footer">
+            <button id="saveConfigBtn" class="config-save-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor"/>
+                </svg>
+                保存配置
+            </button>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const vscode = acquireVsCodeApi();
+            
+            // 获取DOM元素
+            const apiKeyInput = document.getElementById('apiKeyInput');
+            const baseUrlInput = document.getElementById('baseUrlInput');
+            const historyLimitInput = document.getElementById('historyLimitInput');
+            const saveButton = document.getElementById('saveConfigBtn');
+            const toggleApiKey = document.getElementById('toggleApiKey');
+
+            // 保存配置
+            function saveConfig() {
+                const apiKey = apiKeyInput.value.trim();
+                const baseUrl = baseUrlInput.value.trim();
+                const historyLimit = parseInt(historyLimitInput.value) || 5;
+
+                if (!apiKey) {
+                    vscode.postMessage({
+                        command: 'showError',
+                        message: '请输入 API Key'
+                    });
+                    return;
+                }
+
+                // 验证历史轮数范围
+                if (historyLimit < 1 || historyLimit > 20) {
+                    vscode.postMessage({
+                        command: 'showError',
+                        message: '历史记录轮数必须在1-20之间'
+                    });
+                    return;
+                }
+
+                vscode.postMessage({
+                    command: 'saveConfig',
+                    config: {
+                        apiKey,
+                        baseUrl: baseUrl || 'https://openrouter.ai/api/v1',
+                        historyLimit
+                    }
+                });
+            }
+
+            // 切换 API Key 显示/隐藏
+            function toggleApiKeyVisibility() {
+                const type = apiKeyInput.type;
+                apiKeyInput.type = type === 'password' ? 'text' : 'password';
+                
+                // 更新图标
+                toggleApiKey.innerHTML = type === 'password' 
+                    ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4.5C7 4.5 2.73 7.61 1 12C2.73 16.39 7 19.5 12 19.5C17 19.5 21.27 16.39 23 12C21.27 7.61 17 4.5 12 4.5ZM12 17C9.24 17 7 14.76 7 12C7 9.24 9.24 7 12 7C14.76 7 17 9.24 17 12C17 14.76 14.76 17 12 17ZM12 9C10.34 9 9 10.34 9 12C9 13.66 10.34 15 12 15C13.66 15 15 13.66 15 12C15 10.34 13.66 9 12 9Z" fill="currentColor"/></svg>'
+                    : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 6.5C15.79 6.5 19.17 8.63 20.82 12C19.17 15.37 15.79 17.5 12 17.5C8.21 17.5 4.83 15.37 3.18 12C4.83 8.63 8.21 6.5 12 6.5ZM12 4.5C7 4.5 2.73 7.61 1 12C2.73 16.39 7 19.5 12 19.5C17 19.5 21.27 16.39 23 12C21.27 7.61 17 4.5 12 4.5ZM12 9.5C13.38 9.5 14.5 10.62 14.5 12C14.5 13.38 13.38 14.5 12 14.5C10.62 14.5 9.5 13.38 9.5 12C9.5 10.62 10.62 9.5 12 9.5ZM12 7.5C9.52 7.5 7.5 9.52 7.5 12C7.5 14.48 9.52 16.5 12 16.5C14.48 16.5 16.5 14.48 16.5 12C16.5 9.52 14.48 7.5 12 7.5Z" fill="currentColor"/><path d="M2 2L22 22" stroke="currentColor" stroke-width="2"/></svg>';
+            }
+
+            // 监听消息
+            window.addEventListener('message', event => {
+                const message = event.data;
+                switch (message.command) {
+                    case 'setConfig':
+                        apiKeyInput.value = message.config.apiKey || '';
+                        baseUrlInput.value = message.config.baseUrl || '';
+                        historyLimitInput.value = message.config.historyLimit || 5;
+                        break;
+                }
+            });
+
+            // 绑定事件
+            saveButton.addEventListener('click', saveConfig);
+            toggleApiKey.addEventListener('click', toggleApiKeyVisibility);
+
+            // 加载配置
+            vscode.postMessage({ command: 'getConfig' });
+        }());
+    </script>
+</body>
+</html> 
